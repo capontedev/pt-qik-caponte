@@ -1,5 +1,4 @@
-import { Type } from 'class-transformer'
-import { Transform } from 'class-transformer'
+import { Expose, Type } from 'class-transformer'
 import { IsMongoId, IsEnum, IsInt, IsOptional, IsNumber } from 'class-validator'
 import { DriverStatus } from '../enums/driver.enum'
 import { OmitType } from '@nestjs/mapped-types'
@@ -23,12 +22,7 @@ export class DrivesQueryDto extends PaginationDto {
 	@IsOptional()
 	@IsInt()
 	@Type(() => Number)
-	@Transform(({ value, key }) => {
-		if (key === 'max-distance') {
-			return Number(value)
-		}
-		return value
-	})
+	@Expose({ name: 'max-distance' })
 	maxDistance?: number
 }
 

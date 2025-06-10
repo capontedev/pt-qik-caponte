@@ -37,6 +37,7 @@ describe('DriversService', () => {
 	}
 
 	const mockDriverModel = {
+		aggregate: jest.fn(),
 		find: jest.fn().mockReturnValue({
 			forEach: jest.fn(),
 			populate: jest.fn().mockReturnValue({
@@ -128,6 +129,96 @@ describe('DriversService', () => {
 			await expect(service.getAllWithPagination(query)).rejects.toThrow(
 				new HttpException('Test error', HttpStatus.BAD_REQUEST)
 			)
+		})
+	})
+
+	describe('getNearbyWithPagination', () => {
+		it('should return paginated drivers when valid coordinates and maxDistance are provided', async () => {
+			const query: DrivesQueryDto = {
+				lat: 10.5061,
+				lon: -66.9036,
+				maxDistance: 3,
+				limit: 10,
+				page: 1
+			}
+
+			mockDriverModel.aggregate.mockResolvedValue([
+				{
+					items: [mockDriver],
+					totalRecords: 1
+				}
+			])
+
+			const result = await service.getNearbyWithPagination(query)
+
+			expect(model.aggregate).toHaveBeenCalled()
+			expect(result).toEqual({
+				items: [mockDriver],
+				totalRecords: 1,
+				hasNextPage: false,
+				totalPages: 1
+			})
+		})
+
+		it('should throw HttpException when lat, lon, and maxDistance are not provided together', async () => {
+			const query: DrivesQueryDto = {
+				lat: 10.5061
+			}
+
+			await expect(service.getNearbyWithPagination(query)).rejects.toThrow(
+				new HttpException(
+					'lat, lon, and max-distance must be provided together',
+					HttpStatus.BAD_REQUEST
+				)
+			)
+		})
+
+		it('should throw HttpException when maxDistance is greater than 3', async () => {
+			const query: DrivesQueryDto = {
+				lat: 10.5061,
+				lon: -66.9036,
+				maxDistance: 5
+			}
+
+			await expect(service.getNearbyWithPagination(query)).rejects.toThrow(
+				new HttpException(
+					'max-distance must be less than 3 KM.',
+					HttpStatus.BAD_REQUEST
+				)
+			)
+		})
+
+		it('should handle service errors', async () => {
+			const query: DrivesQueryDto = {
+				lat: 10.5061,
+				lon: -66.9036,
+				maxDistance: 3
+			}
+
+			mockDriverModel.aggregate.mockRejectedValue(new Error('Test error'))
+
+			await expect(service.getNearbyWithPagination(query)).rejects.toThrow(
+				new HttpException('Test error', HttpStatus.BAD_REQUEST)
+			)
+		})
+
+		it('should return empty array when no drivers are found', async () => {
+			const query: DrivesQueryDto = {
+				lat: 10.5061,
+				lon: -66.9036,
+				maxDistance: 3
+			}
+
+			mockDriverModel.aggregate.mockResolvedValue([])
+
+			const result = await service.getNearbyWithPagination(query)
+
+			expect(result).toEqual({
+				items: [],
+				totalRecords: 0,
+				hasNextPage: false,
+				totalPages: 0
+			})
 		})
 	})
 

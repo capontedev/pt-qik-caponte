@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { DriversModule } from './drivers/drivers.module'
 import { MongooseModule } from '@nestjs/mongoose'
+import { PassengersModule } from './passengers/passengers.module'
 
 @Module({
 	imports: [
@@ -16,7 +17,8 @@ import { MongooseModule } from '@nestjs/mongoose'
 				uri: configService.get<string>('MONGO_URI')
 			})
 		}),
-		DriversModule
+		DriversModule,
+		PassengersModule
 	]
 })
 export class AppModule {}

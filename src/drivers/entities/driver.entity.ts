@@ -30,7 +30,7 @@ export class Driver {
 
 	@Prop({
 		type: { type: String, enum: ['Point'] },
-		coordinates: { type: [Number], index: '2dsphere' }
+		coordinates: { type: [Number] }
 	})
 	lastCoordinates?: { type: string; coordinates: number[] }
 
@@ -43,3 +43,5 @@ export class Driver {
 
 export type DriverDocument = Driver & Document
 export const DriverSchema = SchemaFactory.createForClass(Driver)
+
+DriverSchema.index({ lastCoordinates: '2dsphere' }, { sparse: true })

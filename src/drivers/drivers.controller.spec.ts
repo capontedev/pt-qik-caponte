@@ -40,6 +40,7 @@ describe('DriversController', () => {
 					provide: DriversService,
 					useValue: {
 						getAllWithPagination: jest.fn(),
+						getNearbyWithPagination: jest.fn(),
 						findOne: jest.fn()
 					}
 				}
@@ -54,7 +55,7 @@ describe('DriversController', () => {
 		jest.clearAllMocks()
 	})
 
-	describe('getAllWithPagination()', () => {
+	describe('getAllWithPagination', () => {
 		it('should call service with query parameters', async () => {
 			const query: DrivesQueryDto = {
 				page: 1,
@@ -100,7 +101,45 @@ describe('DriversController', () => {
 		})
 	})
 
-	describe('findOne()', () => {
+	describe('getNearbyWithPagination', () => {
+		it('should call service with query parameters', async () => {
+			const query: DrivesQueryDto = {
+				lat: 40.7128,
+				lon: -74.006,
+				maxDistance: 10,
+				limit: 10,
+				page: 1
+			}
+
+			jest
+				.spyOn(service, 'getNearbyWithPagination')
+				.mockResolvedValue(mockDriverPaginated)
+
+			const result = await controller.getNearbyWithPagination(query)
+
+			expect(result).toEqual(mockDriverPaginated)
+			expect(service.getNearbyWithPagination).toHaveBeenCalledWith(query)
+		})
+
+		it('should handle service errors', async () => {
+			const query: DrivesQueryDto = {
+				lat: 40.7128,
+				lon: -74.006,
+				maxDistance: 10,
+				limit: 10,
+				page: 1
+			}
+			const error = new Error('Test error')
+
+			jest.spyOn(service, 'getNearbyWithPagination').mockRejectedValue(error)
+
+			await expect(controller.getNearbyWithPagination(query)).rejects.toThrow(
+				'Test error'
+			)
+		})
+	})
+
+	describe('findOne', () => {
 		it('should call service with valid ID', async () => {
 			const id = '507f1f77bcf86cd799439011'
 
