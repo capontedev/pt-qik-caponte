@@ -44,6 +44,8 @@ export class TripsService {
 	}
 
 	async create(createTripDto: CreateTripDto): Promise<TripDocument> {
+		const session = await this.tripModel.db.startSession()
+		session.startTransaction()
 		try {
 			const driver = await this.driversService.findOne(createTripDto.driverId)
 			const passenger = await this.passengersService.findOne(
@@ -89,18 +91,21 @@ export class TripsService {
 			})
 
 			driver.status = DriverStatus.TRIP_IN_PROGRESS
-			await driver.save()
+			await driver.save({ session })
 
 			passenger.status = PassengerStatus.TRIP_IN_PROGRESS
-			await passenger.save()
+			await passenger.save({ session })
 
-			const tripCreated = await trip.save()
+			const tripCreated = await trip.save({ session })
+			await session.commitTransaction()
+			await session.endSession()
 			return tripCreated.populate(['driver', 'passenger'])
 		} catch (error) {
+			await session.abortTransaction()
+			await session.endSession()
 			if (error instanceof HttpException) {
 				throw error
 			}
-
 			throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
 		}
 	}
@@ -127,8 +132,10 @@ export class TripsService {
 	}
 
 	async completeTrip(id: string): Promise<TripDocument> {
+		const session = await this.tripModel.db.startSession()
+		session.startTransaction()
 		try {
-			const trip = await this.tripModel.findById(id)
+			const trip = await this.tripModel.findById(id).session(session)
 
 			if (!trip) {
 				throw new HttpException('Trip not found', HttpStatus.NOT_FOUND)
@@ -145,38 +152,47 @@ export class TripsService {
 				(trip.driver as Types.ObjectId).toString()
 			)
 			driver.status = DriverStatus.AVAILABLE
-			await driver.save()
+			await driver.save({ session })
 
 			const passenger = await this.passengersService.findOne(
 				(trip.passenger as Types.ObjectId).toString()
 			)
 			passenger.status = PassengerStatus.AVAILABLE
-			await passenger.save()
+			await passenger.save({ session })
 
 			if (!trip.invoice) {
-				const invoice = await this.invoicesService.create({
-					resourceId: trip.id,
-					resourceType: ResourceType.TRIP,
-					to: {
-						name: passenger.name,
-						lastName: passenger.lastName
+				const invoice = await this.invoicesService.create(
+					{
+						resourceId: trip.id,
+						resourceType: ResourceType.TRIP,
+						to: {
+							name: passenger.name,
+							lastName: passenger.lastName
+						},
+						items: [
+							{
+								description: `${driver.name} ${driver.lastName} - Servicio de transporte`,
+								quantity: 1,
+								unitPrice: trip.price
+							}
+						],
+						tip: trip.tip
 					},
-					items: [
-						{
-							description: `${driver.name} ${driver.lastName} - Servicio de transporte`,
-							quantity: 1,
-							unitPrice: trip.price
-						}
-					],
-					tip: trip.tip
-				})
-
+					session
+				)
 				trip.invoice = invoice.id
 			}
 
-			const tripUpdated = await trip.save()
+			const tripUpdated = await trip.save({ session })
+			await session.commitTransaction()
+			await session.endSession()
 			return tripUpdated.populate(['driver', 'passenger', 'invoice'])
 		} catch (error) {
+			await session.abortTransaction()
+			await session.endSession()
+			if (error instanceof HttpException) {
+				throw error
+			}
 			throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
 		}
 	}

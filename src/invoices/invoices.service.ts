@@ -32,7 +32,7 @@ export class InvoicesService {
 		}
 	}
 
-	async create(data: InvoiceData): Promise<InvoiceDocument> {
+	async create(data: InvoiceData, session?: any): Promise<InvoiceDocument> {
 		try {
 			const [settingInvoiceNumber, settingTaxPercentaje] = await Promise.all([
 				this.settingsService.getValueByKey('InvoiceNumber'),
@@ -81,6 +81,9 @@ export class InvoicesService {
 				}
 			})
 
+			if (session) {
+				return await invoice.save({ session })
+			}
 			return await invoice.save()
 		} catch (error) {
 			if (error instanceof HttpException) {

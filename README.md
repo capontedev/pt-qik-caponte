@@ -8,6 +8,11 @@ Technical test: Carlos Aponte
 
 All endpoints are relative to the base URL: `http://localhost:3000`
 
+> **Note:** All `Request Example` and response examples in this documentation use real data stored in a cloud database mongo. You can test these requests live using the provided URLs and IDs, as they correspond to actual records in the system.
+
+> **Important:** For testing purposes, a `.env` file is included in the project root with the connection string to the cloud database used by the API.  
+> **Warning:** I am aware that including sensitive information such as database credentials in version control is bad practice and should never be done in production environments. This is provided here strictly to facilitate testing and evaluation.
+
 ## Setup Instructions
 
 1.  **Install Node Version:**
@@ -39,6 +44,8 @@ All endpoints are relative to the base URL: `http://localhost:3000`
     ```bash
     npm run test
     ```        
+
+> This project includes unit tests to ensure the correct functionality of the main modules and endpoints.    
 
 ## Endpoints
 
@@ -110,8 +117,8 @@ All endpoints are relative to the base URL: `http://localhost:3000`
 
     *   `items` (array): Array of driver objects.
     *   `totalRecords` (number): Total number of drivers matching the query.
-    *   `hasNextPage` (boolean): Indicates if there is a next page of results.
     *   `totalPages` (number): total of pages.
+    *   `hasNextPage` (boolean): Indicates if there is a next page of results.
 
 ### 2. Get Driver by ID
 
@@ -161,13 +168,13 @@ All endpoints are relative to the base URL: `http://localhost:3000`
         "startCoordinates": [-66.9036, 10.5061],
         "destinationCoordinates": [-66.9005, 10.5092],
         "paymentType": "Cash",
-        "tip": 2.5,
+        "tip": 2.5
     }
     ```
 *   **Response:**
     ```json
     {
-      "id": "6848b17c22186096e6abfce7",
+      "id": "<id>",
       "driver": "6847a17c22186096e6abfce6",
       "passenger": "68487c68917813bbbbb36f7c",
       "status": "Active",
@@ -187,19 +194,19 @@ All endpoints are relative to the base URL: `http://localhost:3000`
 ### 4. Complete a Trip
 
 *   **Endpoint:** `PATCH /trips/:id/complete`
-*   **Description:** Completes an active trip by its ID.
+*   **Description:** Completes an active trip by its ID and generate a invoice.
 *   **Path Parameter:**
     *   `id` (required, string): The ID of the trip to complete.
 
 *   **Request Example:**
     ```
-    PATCH /trips/6848b17c22186096e6abfce7/complete
+    PATCH /trips/<id>/complete
     ```
 
 *   **Response:**
     ```json
     {
-      "id": "6848b17c22186096e6abfce7",
+      "id": "<id>",
       "status": "Completed",
       "completedAt": "2025-06-09T13:00:00.000Z",
       ...
@@ -291,7 +298,7 @@ All endpoints are relative to the base URL: `http://localhost:3000`
 *   **Request Example:**
 
     ```
-    GET /drivers/68487c68917813bbbbb36f7a
+    GET /passengers/68487c68917813bbbbb36f7a
     ```
 
 *   **Response:**
