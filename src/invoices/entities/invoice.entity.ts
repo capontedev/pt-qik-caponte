@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document, Schema as MongooseSchema, Types } from 'mongoose'
 import { ResourceType } from '../enums/invoices.enum'
+import { transformSchemaJson } from './../../common/utils/utils.mongo'
 
 const InvoiceItemSchema = new MongooseSchema(
 	{
@@ -15,11 +16,7 @@ const InvoiceItemSchema = new MongooseSchema(
 @Schema({
 	timestamps: true,
 	toJSON: {
-		transform: (_, ret) => {
-			ret.id = ret._id
-			delete ret._id
-			delete ret.__v
-		}
+		transform: transformSchemaJson
 	},
 	toObject: { virtuals: true }
 })

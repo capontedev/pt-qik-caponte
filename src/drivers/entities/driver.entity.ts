@@ -1,14 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { DriverStatus } from '../enums/driver.enum'
+import { transformSchemaJson } from './../../common/utils/utils.mongo'
 
 @Schema({
 	timestamps: true,
 	toJSON: {
-		transform: (_, ret) => {
-			ret.id = ret._id
-			delete ret._id
-			delete ret.__v
-		}
+		transform: transformSchemaJson
 	},
 	toObject: { virtuals: true }
 })

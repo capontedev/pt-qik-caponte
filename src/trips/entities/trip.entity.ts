@@ -5,15 +5,12 @@ import { Driver } from './../../drivers/entities/driver.entity'
 import { Passenger } from './../../passengers/entities/passenger.entity'
 import { PaymentType } from './../../common/enums/payment-type.enum'
 import { Invoice } from 'src/invoices/entities/invoice.entity'
+import { transformSchemaJson } from './../../common/utils/utils.mongo'
 
 @Schema({
 	timestamps: true,
 	toJSON: {
-		transform: (_, ret) => {
-			ret.id = ret._id
-			delete ret._id
-			delete ret.__v
-		}
+		transform: transformSchemaJson
 	},
 	toObject: { virtuals: true }
 })
