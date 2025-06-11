@@ -40,6 +40,10 @@ export class PassengersService {
 
 			return driver
 		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error
+			}
+
 			throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
 		}
 	}

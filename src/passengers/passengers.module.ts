@@ -11,6 +11,7 @@ import { Passenger, PassengerSchema } from './entities/passenger.entity'
 		])
 	],
 	controllers: [PassengersController],
-	providers: [PassengersService]
+	providers: [PassengersService],
+	exports: [PassengersService]
 })
 export class PassengersModule {}

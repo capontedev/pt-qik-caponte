@@ -7,6 +7,7 @@ import { DriverStatus } from '../enums/driver.enum'
 		transform: (_, ret) => {
 			ret.id = ret._id
 			delete ret._id
+			delete ret.__v
 		}
 	},
 	toObject: { virtuals: true }
@@ -45,3 +46,4 @@ export type DriverDocument = Driver & Document
 export const DriverSchema = SchemaFactory.createForClass(Driver)
 
 DriverSchema.index({ lastCoordinates: '2dsphere' }, { sparse: true })
+DriverSchema.index({ status: 1 })

@@ -9,6 +9,7 @@ import { Driver, DriverSchema } from './entities/driver.entity'
 		MongooseModule.forFeature([{ name: Driver.name, schema: DriverSchema }])
 	],
 	controllers: [DriversController],
-	providers: [DriversService]
+	providers: [DriversService],
+	exports: [DriversService]
 })
 export class DriversModule {}

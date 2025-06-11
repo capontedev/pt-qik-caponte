@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { DriversModule } from './drivers/drivers.module'
 import { MongooseModule } from '@nestjs/mongoose'
 import { PassengersModule } from './passengers/passengers.module'
+import { TripsModule } from './trips/trips.module'
 
 @Module({
 	imports: [
@@ -18,7 +19,8 @@ import { PassengersModule } from './passengers/passengers.module'
 			})
 		}),
 		DriversModule,
-		PassengersModule
+		PassengersModule,
+		TripsModule
 	]
 })
 export class AppModule {}

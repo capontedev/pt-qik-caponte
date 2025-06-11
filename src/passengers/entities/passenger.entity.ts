@@ -8,6 +8,7 @@ import { PassengerStatus } from '../enums/passenger.enum'
 		transform: (_, ret) => {
 			ret.id = ret._id
 			delete ret._id
+			delete ret.__v
 		}
 	},
 	toObject: { virtuals: true }

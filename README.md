@@ -44,7 +44,7 @@ All endpoints are relative to the base URL: `http://localhost:3000`
 *   **Query Parameters:**
     *   `page` (optional, integer): Pagination number. Used to retrieve the next set of results. Default is 1.
     *   `limit` (optional, integer): Maximum number of drivers to return per page. Default is 10.
-    *   `status` (optional, enum): Filter drivers by status. Possible values: `Available`, `Unavailable`, `InService`, `Inactive`.
+    *   `status` (optional, enum): Filter drivers by status. Possible values: `Available`, `Unavailable`, `TripInProgress`, `Inactive`.
     *   `lat` (optional, number): Latitude for location-based search.
     *   `lon` (optional, number): Longitude for location-based search.
     *   `max-distance` (optional, integer): Maximum distance (in kilometers) from the specified location. Default is 3.
@@ -144,18 +144,139 @@ All endpoints are relative to the base URL: `http://localhost:3000`
 
     *   404 Not Found: If the driver with the specified ID does not exist.
 
+### 3. Create a New Trip
 
+*   **Endpoint:** `POST /trips`
+*   **Description:** Creates a new trip request, assigning a driver to a passenger.
+*   **Request Body:**
+    ```json
+    {
+        "driverId": "6847a17c22186096e6abfce6",
+        "passengerId": "68487c68917813bbbbb36f7c",
+        "startCoordinates": [-66.9036, 10.5061],
+        "destinationCoordinates": [-66.9005, 10.5092],
+        "paymentType": "Cash",
+        "tip": 2.5,
+    }
+    ```
+*   **Response:**
+    ```json
+    {
+      "id": "6848b17c22186096e6abfce7",
+      "driver": "6847a17c22186096e6abfce6",
+      "passenger": "68487c68917813bbbbb36f7c",
+      "status": "Active",
+      "startCoordinates": { "type": "Point", "coordinates": [-66.9036, 10.5061] },
+      "destinationCoordinates": { "type": "Point", "coordinates": [-66.9005, 10.5092] },
+      "price": 10.5,
+      "tip": 2.5,
+      "paymentType": "Cash",
+      "distance": 1.2,
+      "startAt": "2025-06-09T12:40:00.000Z",
+      "createdAt": "2025-06-09T12:40:00.000Z"
+    }
+    ```
 
-### 1. Get All Passengers with Pagination
+---
+
+### 4. Complete a Trip
+
+*   **Endpoint:** `PATCH /trips/:id/complete`
+*   **Description:** Completes an active trip by its ID.
+*   **Path Parameter:**
+    *   `id` (required, string): The ID of the trip to complete.
+
+*   **Request Example:**
+    ```
+    PATCH /trips/6848b17c22186096e6abfce7/complete
+    ```
+
+*   **Response:**
+    ```json
+    {
+      "id": "6848b17c22186096e6abfce7",
+      "status": "Completed",
+      "completedAt": "2025-06-09T13:00:00.000Z",
+      ...
+    }
+    ```
+
+*   **Error Responses:**
+    *   404 Not Found: If the trip with the specified ID does not exist.
+    *   400 Bad Request: If the trip is not active.
+
+---
+
+### 5. Get All Active Trips
+
+*   **Endpoint:** `GET /trips`
+*   **Description:** Retrieves a paginated list of all active trips.
+*   **Query Parameters:**
+    *   `page` (optional, integer): Pagination number. Default is 1.
+    *   `limit` (optional, integer): Maximum number of trips per page. Default is 10.
+    *   `status` (optional, string): Filter by trip status. Use `Active` to get active trips.
+
+*   **Example:**
+    ```
+    GET /trips?status=Active
+    ```
+
+*   **Response:**
+    ```json
+    {
+      "items": [
+        {
+          "id": "6848b17c22186096e6abfce7",
+          "driver": {
+            "id": "6847a17c22186096e6abfce6",
+            "name": "Carlos",
+            "lastName": "Martínez",
+            "status": "TripInProgress",
+            "lastCoordinates": {
+                "type": "Point",
+                "coordinates": [
+                    -66.9036,
+                    10.5061
+                ]
+            },
+            "createdAt": "2025-06-09T12:30:00.000Z",
+            "updatedAt": "2025-06-11T03:12:33.611Z",
+          },
+          "passenger": {
+            "name": "Ana",
+            "lastName": "Ramírez",
+            "status": "TripInProgress",
+            "createdAt": "2025-06-09T12:45:00.000Z",
+            "updatedAt": "2025-06-11T03:12:33.704Z",
+            "id": "68487c68917813bbbbb36f7c"
+          },
+          "status": "Active",
+          "startCoordinates": { "type": "Point", "coordinates": [-66.9036, 10.5061] },
+          "destinationCoordinates": { "type": "Point", "coordinates": [-66.9005, 10.5092] },
+          "price": 10.5,
+          "tip": 2.5,
+          "paymentType": "Cash",
+          "distance": 1.2,
+          "startAt": "2025-06-09T12:40:00.000Z",
+          "createdAt": "2025-06-09T12:40:00.000Z"
+        }
+      ],
+      "totalRecords": 1,
+      "totalPages": 1,
+      "hasNextPage": false
+    }
+    ```
+
+### 6. Get All Passengers with Pagination
 
 *   **Endpoint:** `GET /passengers`
 *   **Description:** Retrieves a paginated list of passengers.
 *   **Query Parameters:**
     *   `page` (optional, integer): Pagination number. Used to retrieve the next set of results. Default is 1.
     *   `limit` (optional, integer): Maximum number of passengers to return per page. Default is 10.
-    *   `status` (optional, enum): Filter passengers by status. Possible values: `Available`, `InService`.
+    *   `status` (optional, enum): Filter passengers by status. Possible values: `Available`, `TripInProgress`.
 
-### 2. Get Passengers by ID
+### 7. Get Passengers by ID
 
 *   **Endpoint:** `GET /passengers/:id`
 *   **Description:** Retrieves a specific passengers by ID.
@@ -182,9 +303,9 @@ All endpoints are relative to the base URL: `http://localhost:3000`
 
 *   **Error Responses:**
 
-    *   404 Not Found: If the driver with the specified ID does not exist.
+    *   404 Not Found: If the passenger with the specified ID does not exist.
 
-### 3. Get Nearest Drivers for a Passenger's Requested Trip
+### 8. Get Nearest Drivers for a Passenger's Requested Trip
 
 *   **Endpoint:** `GET /drivers/nearby`
 *   **Description:** Retrieves a list of the 3 nearest drivers to a passenger's starting point.

@@ -1,6 +1,6 @@
 export enum DriverStatus {
 	AVAILABLE = 'Available',
 	UNAVAILABLE = 'Unavailable',
-	TRIP_PROGGRESS = 'TripProggress',
+	TRIP_IN_PROGRESS = 'TripInProgress',
 	INACTIVE = 'Inactive'
 }
