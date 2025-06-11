@@ -4,6 +4,8 @@ import { DriversModule } from './drivers/drivers.module'
 import { MongooseModule } from '@nestjs/mongoose'
 import { PassengersModule } from './passengers/passengers.module'
 import { TripsModule } from './trips/trips.module'
+import { SettingsModule } from './settings/settings.module'
+import { InvoicesModule } from './invoices/invoices.module'
 
 @Module({
 	imports: [
@@ -20,7 +22,9 @@ import { TripsModule } from './trips/trips.module'
 		}),
 		DriversModule,
 		PassengersModule,
-		TripsModule
+		TripsModule,
+		SettingsModule,
+		InvoicesModule
 	]
 })
 export class AppModule {}

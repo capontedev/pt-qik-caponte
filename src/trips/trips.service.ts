@@ -12,6 +12,8 @@ import { getDistance } from 'geolib'
 import { TripsFilterDto, TripsQueryDto } from './dto/trip.dto'
 import { Paginated } from './../common/pagination/interfaces/pagination.interface'
 import { pagination } from './../common/pagination/pagination'
+import { InvoicesService } from './../invoices/invoices.service'
+import { ResourceType } from './../invoices/enums/invoices.enum'
 
 @Injectable()
 export class TripsService {
@@ -19,7 +21,8 @@ export class TripsService {
 		@InjectModel(Trip.name)
 		private tripModel: Model<TripDocument>,
 		private readonly driversService: DriversService,
-		private readonly passengersService: PassengersService
+		private readonly passengersService: PassengersService,
+		private readonly invoicesService: InvoicesService
 	) {}
 
 	async getAllWithPagination(
@@ -33,7 +36,7 @@ export class TripsService {
 				page,
 				limit,
 				filter: queryFilter,
-				populate: ['driver', 'passenger']
+				populate: ['driver', 'passenger', 'invoice']
 			})
 		} catch (error) {
 			throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
@@ -91,7 +94,8 @@ export class TripsService {
 			passenger.status = PassengerStatus.TRIP_IN_PROGRESS
 			await passenger.save()
 
-			return trip.save()
+			const tripCreated = await trip.save()
+			return tripCreated.populate(['driver', 'passenger'])
 		} catch (error) {
 			if (error instanceof HttpException) {
 				throw error
@@ -117,9 +121,9 @@ export class TripsService {
 	}
 	private calculatePrice(distance: number): number {
 		// Fake para calcular tarifa base + precio por km, usarlo en invoice
-		const baseFare = 5.0
+		const basePrice = 5.0
 		const perKm = 1.5
-		return baseFare + distance * perKm
+		return basePrice + distance * perKm
 	}
 
 	async completeTrip(id: string): Promise<TripDocument> {
@@ -149,7 +153,29 @@ export class TripsService {
 			passenger.status = PassengerStatus.AVAILABLE
 			await passenger.save()
 
-			return trip.save()
+			if (!trip.invoice) {
+				const invoice = await this.invoicesService.create({
+					resourceId: trip.id,
+					resourceType: ResourceType.TRIP,
+					to: {
+						name: passenger.name,
+						lastName: passenger.lastName
+					},
+					items: [
+						{
+							description: `${driver.name} ${driver.lastName} - Servicio de transporte`,
+							quantity: 1,
+							unitPrice: trip.price
+						}
+					],
+					tip: trip.tip
+				})
+
+				trip.invoice = invoice.id
+			}
+
+			const tripUpdated = await trip.save()
+			return tripUpdated.populate(['driver', 'passenger', 'invoice'])
 		} catch (error) {
 			throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
 		}

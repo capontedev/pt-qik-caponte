@@ -8,6 +8,7 @@ import { TripStatus } from './enums/trip.enum'
 import { TripsQueryDto } from './dto/trip.dto'
 import { DriversService } from './../drivers/drivers.service'
 import { PassengersService } from './../passengers/passengers.service'
+import { InvoicesService } from './../invoices/invoices.service'
 import { PaymentType } from './../common/enums/payment-type.enum'
 import { CreateTripDto } from './dto/create-trip.dto'
 import { DriverStatus } from './../drivers/enums/driver.enum'
@@ -24,6 +25,7 @@ describe('TripsService', () => {
 	let model: jest.Mocked<Model<TripDocument>>
 	let driversService: DriversService
 	let passengersService: PassengersService
+	let invoicesService: InvoicesService
 
 	const mockDriver = {
 		_id: '507f1f77bcf86cd799439011',
@@ -54,7 +56,8 @@ describe('TripsService', () => {
 		status: TripStatus.ACTIVE,
 		createdAt: new Date('2025-11-01'),
 		updatedAt: new Date('2025-11-01'),
-		save: jest.fn().mockResolvedValue(undefined)
+		save: jest.fn(),
+		populate: jest.fn()
 	} as any
 
 	const mockTripPaginated: Paginated<TripDocument> = {
@@ -64,12 +67,16 @@ describe('TripsService', () => {
 		hasNextPage: false
 	}
 
-	const mockTripModel = jest.fn().mockImplementation(() => mockTrip)
-	mockTripModel.prototype.find = jest.fn()
-	mockTripModel.prototype.findById = jest.fn()
-	mockTripModel.prototype.aggregate = jest.fn()
-	mockTripModel.prototype.countDocuments = jest.fn()
-	mockTripModel.prototype.sort = jest.fn()
+	const mockTripModel = Object.assign(
+		jest.fn().mockImplementation(() => mockTrip),
+		{
+			find: jest.fn(),
+			findById: jest.fn(),
+			aggregate: jest.fn(),
+			countDocuments: jest.fn(),
+			sort: jest.fn()
+		}
+	)
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -90,6 +97,12 @@ describe('TripsService', () => {
 					useValue: {
 						findOne: jest.fn().mockResolvedValue(mockPassenger)
 					}
+				},
+				{
+					provide: InvoicesService,
+					useValue: {
+						create: jest.fn()
+					}
 				}
 			]
 		}).compile()
@@ -100,6 +113,7 @@ describe('TripsService', () => {
 		)
 		driversService = module.get<DriversService>(DriversService)
 		passengersService = module.get<PassengersService>(PassengersService)
+		invoicesService = module.get<InvoicesService>(InvoicesService)
 	})
 
 	afterEach(() => {
@@ -141,7 +155,7 @@ describe('TripsService', () => {
 				filter: {
 					status: TripStatus.ACTIVE
 				},
-				populate: ['driver', 'passenger']
+				populate: ['driver', 'passenger', 'invoice']
 			})
 
 			expect(result).toEqual(mockTripPaginated)
@@ -177,6 +191,7 @@ describe('TripsService', () => {
 				.spyOn(passengersService, 'findOne')
 				.mockResolvedValue(mockPassenger as any)
 			mockTrip.save.mockResolvedValue(mockTrip)
+			mockTrip.populate.mockResolvedValue(mockTrip)
 
 			const result = await service.create(createTripDto)
 
@@ -184,6 +199,64 @@ describe('TripsService', () => {
 			expect(driversService.findOne).toHaveBeenCalledWith(mockDriver._id)
 			expect(passengersService.findOne).toHaveBeenCalledWith(mockPassenger._id)
 			expect(mockTrip.save).toHaveBeenCalled()
+			expect(mockTrip.populate).toHaveBeenCalled()
+		})
+	})
+
+	describe('completeTrip', () => {
+		it('should complete a trip and return the updated trip', async () => {
+			const tripId = mockTrip._id
+			const completedTrip = {
+				...mockTrip,
+				status: TripStatus.COMPLETED,
+				completedAt: new Date(),
+				populate: jest.fn()
+			}
+			const mockInvoice = { id: 'invoice123' }
+
+			mockTripModel.findById.mockResolvedValue(mockTrip)
+			mockDriver.save.mockResolvedValue(mockDriver)
+			mockPassenger.save.mockResolvedValue(mockPassenger)
+			jest
+				.spyOn(invoicesService, 'create')
+				.mockResolvedValue(mockInvoice as any)
+			mockTrip.save.mockResolvedValue(completedTrip as any)
+			completedTrip.populate.mockResolvedValue(completedTrip)
+
+			const result = await service.completeTrip(tripId)
+
+			expect(mockTripModel.findById).toHaveBeenCalledWith(tripId)
+			expect(driversService.findOne).toHaveBeenCalledWith(
+				mockTrip.driver.toString()
+			)
+			expect(passengersService.findOne).toHaveBeenCalledWith(
+				mockTrip.passenger.toString()
+			)
+			expect(mockDriver.save).toHaveBeenCalled()
+			expect(mockPassenger.save).toHaveBeenCalled()
+			expect(invoicesService.create).toHaveBeenCalled()
+			expect(mockTrip.save).toHaveBeenCalled()
+			expect(completedTrip.populate).toHaveBeenCalledWith([
+				'driver',
+				'passenger',
+				'invoice'
+			])
+			expect(result).toEqual(completedTrip)
+		})
+
+		it('should throw HttpException if trip does not exist', async () => {
+			mockTripModel.findById.mockResolvedValue(null)
+			await expect(service.completeTrip('notfound')).rejects.toThrow(
+				'Trip not found'
+			)
+		})
+
+		it('should throw HttpException if trip is not active', async () => {
+			const inactiveTrip = { ...mockTrip, status: TripStatus.COMPLETED }
+			mockTripModel.findById.mockResolvedValue(inactiveTrip)
+			await expect(service.completeTrip(inactiveTrip._id)).rejects.toThrow(
+				'Trip is not active'
+			)
 		})
 	})
 })

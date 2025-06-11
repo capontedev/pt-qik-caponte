@@ -4,6 +4,7 @@ import { TripStatus } from '../enums/trip.enum'
 import { Driver } from './../../drivers/entities/driver.entity'
 import { Passenger } from './../../passengers/entities/passenger.entity'
 import { PaymentType } from './../../common/enums/payment-type.enum'
+import { Invoice } from 'src/invoices/entities/invoice.entity'
 
 @Schema({
 	timestamps: true,
@@ -77,6 +78,9 @@ export class Trip {
 
 	@Prop({ type: Date })
 	completedAt: Date
+
+	@Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Invoice' })
+	invoice: Invoice | Types.ObjectId
 
 	@Prop()
 	createdAt: Date
