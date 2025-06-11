@@ -10,26 +10,31 @@ All endpoints are relative to the base URL: `http://localhost:3000`
 
 ## Setup Instructions
 
-1.  **Clone the repository from Git:**
-
+1.  **Install Node Version:**
     ```bash
-    git clone <repository_url>
-    cd <repository_directory>
+    20.14.0
     ```
 
-2.  **Install dependencies using npm:**
+2.  **Clone the repository from Git:**
+
+    ```bash
+    git clone https://github.com/capontedev/pt-qik-caponte.git
+    cd pt-qik-caponte
+    ```
+
+3.  **Install dependencies using npm:**
 
     ```bash
     npm install
     ```
 
-3.  **Run Project using npm:**
+4.  **Run Project using npm:**
 
     ```bash
     npm run start:dev
     ```    
 
-4.  **Run Test using npm:**
+5.  **Run Test using npm:**
 
     ```bash
     npm run test
