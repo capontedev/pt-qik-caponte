@@ -1,8 +1,41 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/gateway/src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/gateway/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/gateway",
+  "projects": {
+    "common": {
+      "type": "library",
+      "root": "libs",
+      "entryFile": "index",
+      "sourceRoot": "libs/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/tsconfig.lib.json"
+      }
+    },
+    "gateway": {
+      "type": "application",
+      "root": "apps/gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/gateway/tsconfig.app.json"
+      }
+    },
+    "taxi24-ms": {
+      "type": "application",
+      "root": "apps/taxi24-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/taxi24-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/taxi24-ms/tsconfig.app.json"
+      }
+    }
   }
 }
